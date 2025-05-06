@@ -1,0 +1,8 @@
+Metadata-Version: 2.1
+Name: statarb
+Version: 0.1.0
+Requires-Dist: numpy>=1.21.0
+Requires-Dist: pandas>=1.3.0
+Requires-Dist: yfinance>=0.1.70
+Requires-Dist: matplotlib>=3.4.0
+Requires-Dist: seaborn>=0.11.0

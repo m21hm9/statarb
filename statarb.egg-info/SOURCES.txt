@@ -1,0 +1,17 @@
+setup.py
+statarb/__init__.py
+statarb/main.py
+statarb/run_analysis.py
+statarb/run_ml_strategy.py
+statarb.egg-info/PKG-INFO
+statarb.egg-info/SOURCES.txt
+statarb.egg-info/dependency_links.txt
+statarb.egg-info/requires.txt
+statarb.egg-info/top_level.txt
+statarb/analysis/__init__.py
+statarb/analysis/pair_analysis.py
+statarb/models/__init__.py
+statarb/models/ml_signal_generator.py
+statarb/models/ou_model.py
+statarb/models/trading_fees.py
+statarb/models/unsupervised_models.py
