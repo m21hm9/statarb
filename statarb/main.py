@@ -52,7 +52,7 @@ def parse_arguments():
                         help='Z-score threshold for stop loss')
     
     # Execution parameters
-    parser.add_argument('--initial_capital', type=float, default=1000000, 
+    parser.add_argument('--initial_capital', type=float, default=150000, 
                         help='Initial capital for backtest')
     parser.add_argument('--position_size', type=float, default=0.05, 
                         help='Position size as fraction of capital')
@@ -78,16 +78,7 @@ def parse_arguments():
     return args
 
 def load_tickers(universe: str, tickers_file: str = None) -> List[str]:
-    """
-    Load ticker symbols based on specified universe.
-    
-    Args:
-        universe: Stock universe to use ('sp500', 'nasdaq100', 'djia', 'custom')
-        tickers_file: File with ticker symbols for custom universe
-        
-    Returns:
-        List of ticker symbols
-    """
+
     if universe == 'custom' and tickers_file:
         # Load custom tickers from file
         try:
@@ -98,7 +89,6 @@ def load_tickers(universe: str, tickers_file: str = None) -> List[str]:
             sys.exit(1)
     
     elif universe == 'sp500':
-        # S&P 500 components (sample)
         tickers = [
             'AAPL', 'MSFT', 'AMZN', 'FB', 'GOOGL', 'GOOG', 'BRK-B', 'JNJ', 'JPM', 'PG', 
             'UNH', 'MA', 'INTC', 'V', 'HD', 'VZ', 'ADBE', 'CRM', 'NFLX', 'DIS',
@@ -107,7 +97,7 @@ def load_tickers(universe: str, tickers_file: str = None) -> List[str]:
         ]
     
     elif universe == 'nasdaq100':
-        # NASDAQ 100 components (sample)
+
         tickers = [
             'AAPL', 'MSFT', 'AMZN', 'FB', 'GOOGL', 'GOOG', 'INTC', 'CSCO', 'CMCSA', 'PEP',
             'ADBE', 'NFLX', 'PYPL', 'NVDA', 'TSLA', 'COST', 'AMGN', 'TCOM', 'SBUX', 'BIDU',
@@ -115,7 +105,7 @@ def load_tickers(universe: str, tickers_file: str = None) -> List[str]:
         ]
     
     elif universe == 'djia':
-        # Dow Jones components
+
         tickers = [
             'AAPL', 'AMGN', 'AXP', 'BA', 'CAT', 'CRM', 'CSCO', 'CVX', 'DIS', 'DOW',
             'GS', 'HD', 'HON', 'IBM', 'INTC', 'JNJ', 'JPM', 'KO', 'MCD', 'MMM',
