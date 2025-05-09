@@ -1,10 +1,3 @@
-"""
-Machine Learning Strategy Runner for Statistical Arbitrage
-
-This script implements the machine learning components of the statistical arbitrage strategy,
-including supervised learning for signal generation and unsupervised learning for asset clustering.
-"""
-
 import os
 import sys
 import argparse
@@ -15,14 +8,12 @@ import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
 from typing import List, Dict, Tuple, Optional, Union, Any
 
-# Import modules
 from statarb.utils.data_utils import fetch_stock_data, preprocess_for_pairs_trading, calculate_returns
 from statarb.models.ml_signal_generator import FeatureGenerator, XGBoostModel
 from statarb.models.unsupervised_models import AssetClustering
 from statarb.utils.market_microstructure import TransactionCostModel
 from statarb.utils.risk_management import PositionSizer, StopLossManager, RiskAnalyzer
 
-# Set up logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -36,8 +27,7 @@ logger = logging.getLogger(__name__)
 def parse_arguments():
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(description='Machine Learning Strategy for Statistical Arbitrage')
-    
-    # Data parameters
+
     parser.add_argument('--start_date', type=str, default='2018-01-01', 
                         help='Start date for data (YYYY-MM-DD)')
     parser.add_argument('--end_date', type=str, default=None, 
