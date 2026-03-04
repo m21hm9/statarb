@@ -1,4 +1,3 @@
-import os
 import requests
 import pandas as pd
 import numpy as np
@@ -6,19 +5,14 @@ import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
 import logging
 from statsmodels.tsa.stattools import coint
-from statsmodels.regression.linear_model import OLS
 import statsmodels.api as sm
+from statsmodels.regression.linear_model import OLS
+
+from statarb.config import get_alpaca_credentials, load_env
 
 # Logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
-
-# Alpaca credentials (env > fallback to provided) 
-# Enter your Alpaca API credentials here or set as environment variables
-ALPACA_API_KEY = os.getenv('ALPACA_API_KEY', ' ')
-ALPACA_API_SECRET = os.getenv('ALPACA_API_SECRET', ' ')
-ALPACA_DATA_BASE_URL = os.getenv('ALPACA_DATA_BASE_URL', ' ')
-# Trading base (not used here, but provided by user): ...
 
 
 def _iso8601_utc(date_str: str, end_of_day: bool) -> str:
@@ -37,9 +31,13 @@ def fetch_stock_data_alpaca(tickers, start_date, end_date, timeframe='1Day', adj
     if not tickers:
         raise ValueError('tickers must be a non-empty list')
 
+    # Load environment variables (including from .env if present)
+    load_env()
+    alpaca_cfg = get_alpaca_credentials()
+
     headers = {
-        'APCA-API-KEY-ID': ALPACA_API_KEY,
-        'APCA-API-SECRET-KEY': ALPACA_API_SECRET,
+        'APCA-API-KEY-ID': alpaca_cfg["api_key"],
+        'APCA-API-SECRET-KEY': alpaca_cfg["api_secret"],
     }
 
     params = {
@@ -55,7 +53,7 @@ def fetch_stock_data_alpaca(tickers, start_date, end_date, timeframe='1Day', adj
 
     all_rows = []
     next_page_token = None
-    url = f"{ALPACA_DATA_BASE_URL}/stocks/bars"
+    url = f"{alpaca_cfg['data_base_url']}/stocks/bars"
 
     while True:
         if next_page_token:
