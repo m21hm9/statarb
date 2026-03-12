@@ -1,0 +1,25 @@
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environments
+.venv/
+venv/
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+
+# OS / editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Logs and local outputs
+*.log
+results*/
+
+# Local secrets (do NOT commit)
+.env
+.env.*
+

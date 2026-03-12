@@ -7,11 +7,13 @@ import logging
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from sklearn.cluster import KMeans, DBSCAN, AgglomerativeClustering
+from sklearn.mixture import GaussianMixture
 from sklearn.metrics import silhouette_score
 from scipy.cluster.hierarchy import dendrogram, linkage
 import networkx as nx
 import os
 import joblib
+from hmmlearn.hmm import GaussianHMM
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -498,4 +500,118 @@ class AssetClustering:
             'cluster': cluster_labels
         })
         
-        return predictions 
+        return predictions
+
+
+class RegimeDetector:
+    """
+    Regime detection using a Gaussian Mixture Model (GMM) for feature
+    distribution and a Hidden Markov Model (HMM) for temporal dynamics.
+    
+    This is designed to work on time-series feature matrices where each
+    row is a timestamp and columns are features such as spread z-score,
+    returns, volatility, etc.
+    """
+
+    def __init__(
+        self,
+        n_gmm_components: int = 3,
+        n_regimes: int = 3,
+        random_state: int = 42,
+    ):
+        self.n_gmm_components = n_gmm_components
+        self.n_regimes = n_regimes
+        self.random_state = random_state
+        self.scaler = StandardScaler()
+        self.gmm = GaussianMixture(
+            n_components=n_gmm_components,
+            covariance_type="full",
+            random_state=random_state,
+        )
+        # HMM on continuous features (or optionally GMM-posteriors)
+        self.hmm_model = GaussianHMM(
+            n_components=n_regimes,
+            covariance_type="full",
+            n_iter=200,
+            random_state=random_state,
+        )
+        self._fitted = False
+
+    def fit(self, features: pd.DataFrame) -> Dict[str, Any]:
+        """
+        Fit GMM and HMM on the provided feature matrix.
+        
+        Args:
+            features: DataFrame indexed by time, columns are features.
+            
+        Returns:
+            Dictionary with fitted objects and intermediate results.
+        """
+        if features.isnull().any().any():
+            features = features.dropna()
+
+        if features.empty:
+            raise ValueError("Features are empty after dropping NaNs.")
+
+        X = self.scaler.fit_transform(features.values)
+
+        # Fit GMM on scaled features (for clustering / interpretation)
+        self.gmm.fit(X)
+        gmm_probs = self.gmm.predict_proba(X)
+        gmm_labels = gmm_probs.argmax(axis=1)
+
+        # Fit HMM directly on the continuous feature vectors
+        self.hmm_model.fit(X)
+
+        self._fitted = True
+
+        # Posterior regime probabilities on the training set
+        _, posteriors = self.hmm_model.score_samples(X)
+
+        regime_probs = pd.DataFrame(
+            posteriors,
+            index=features.index,
+            columns=[f"regime_{i}" for i in range(self.n_regimes)],
+        )
+
+        gmm_resp_df = pd.DataFrame(
+            gmm_probs,
+            index=features.index,
+            columns=[f"cluster_{k}" for k in range(self.n_gmm_components)],
+        )
+
+        return {
+            "gmm_probs": gmm_resp_df,
+            "gmm_labels": pd.Series(gmm_labels, index=features.index, name="gmm_cluster"),
+            "regime_probs": regime_probs,
+        }
+
+    def predict_regimes(self, features: pd.DataFrame) -> pd.DataFrame:
+        """
+        Compute posterior regime probabilities for new features.
+        
+        Args:
+            features: DataFrame indexed by time, columns are features.
+            
+        Returns:
+            DataFrame of shape (T, n_regimes) with regime probabilities.
+        """
+        if not self._fitted:
+            raise ValueError("RegimeDetector must be fitted before calling predict_regimes().")
+
+        if features.isnull().any().any():
+            features = features.dropna()
+
+        if features.empty:
+            raise ValueError("Features are empty after dropping NaNs.")
+
+        X = self.scaler.transform(features.values)
+        _, posteriors = self.hmm_model.score_samples(X)
+
+        regime_probs = pd.DataFrame(
+            posteriors,
+            index=features.index,
+            columns=[f"regime_{i}" for i in range(self.n_regimes)],
+        )
+
+        return regime_probs

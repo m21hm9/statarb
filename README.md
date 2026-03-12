@@ -1,14 +1,13 @@
 # StatArb: Statistical Arbitrage Trading Platform
 
-A comprehensive Python platform for statistical arbitrage trading strategies, featuring pairs trading, machine learning models, and advanced risk management tools.
+A comprehensive Python platform for statistical arbitrage trading strategies, featuring basket-based stat arb, machine learning models, and advanced risk management tools.
 
 ## Features
 
-- **Multiple Trading Strategies**:
-  - Pairs trading with cointegration analysis
-  - Kalman Filter-based dynamic hedging
-  - Machine Learning signal generation (XGBoost)
-  - Ensemble strategies combining multiple approaches
+- **Core Trading Engine**:
+  - Regime-switching, factor-based **multivariate basket stat arb** (GMM + HMM)
+  - Per-asset-class basket configs for **equities, FX, crypto, gold/silver**
+  - Optional Machine Learning signal generation (XGBoost)
 
 - **Data Sources**:
   - Alpaca Markets API integration
@@ -75,57 +74,40 @@ A comprehensive Python platform for statistical arbitrage trading strategies, fe
 
 ## Quick Start
 
-### Basic Pairs Trading Analysis
+### Regime‑Switching Factor Model & Basket Analysis
 
-```python
-from statarb.strategies.pairs_trading import PairsTrader
-from statarb.utils.data_utils import fetch_stock_data
-
-# Fetch data
-data = fetch_stock_data(["NVDA", "AMD"], "2020-01-01", "2023-01-01")
-
-# Run pairs trading analysis
-trader = PairsTrader()
-results = trader.analyze_pair("NVDA", "AMD", data)
-```
-
-### Command Line Interface
+From the project root (where `README.md` and `.env` live), run:
 
 ```bash
-# Run basic pairs trading strategy
-python statarb/main.py --strategy pairs --tickers NVDA,AMD --start_date 2020-01-01
-
-# Run with machine learning signals
-python statarb/main.py --strategy ml --universe sp500 --lookback_period 252
-
-# Run ensemble strategy
-python statarb/main.py --strategy ensemble --formation_period 504
+python run_analysis.py
 ```
 
-### Using the Analysis Scripts
+This will:
 
-```bash
-# Simple pairs analysis with yfinance
-python simple_pair_analysis.py
+- Analyze a diversified set of baskets (equities, gold/silver, FX, crypto).
+- Build per-asset-class factor sets (momentum, volatility, dispersion).
+- Fit a **GMM-HMM regime model** on the factor space for each basket.
+- Apply a **regime-aware basket stat arb strategy** (e.g. mean reversion in MR regimes).
+- Print key metrics including:
+  - Total portfolio return (from basket stat arb).
+  - Per‑basket P&L and returns.
 
-# Advanced analysis with Alpaca API (uses env / .env for credentials)
-python alpaca_pair_analysis.py
-```
+The script also generates plots for:
+
+- Portfolio allocation and portfolio equity curve.
 
 ## Project Structure
 
 ```text
 statarb/
   statarb/                     # Main package
-    analysis/                  # Analysis modules
-    models/                    # ML models and signal generators
+    analysis/                  # Analysis modules (e.g. pair_analysis)
+    models/                    # ML models, regime detector, signal generators
     strategies/                # Trading strategies
     utils/                     # Utility functions
-    main.py                    # Main CLI interface
-    run_analysis.py            # Analysis runner
-  results_nvda_amd_alpaca/     # Generated analysis results (example)
-  alpaca_pair_analysis.py      # Alpaca-specific analysis
-  simple_pair_analysis.py      # Simple yfinance analysis
+    main.py                    # (legacy) CLI interface
+    run_analysis.py            # Library entry point (used by top-level run_analysis.py)
+  run_analysis.py              # Top-level script you run (`python run_analysis.py`)
   requirements.txt             # Dependencies
   setup.py                     # Package setup
 ```
@@ -158,12 +140,19 @@ For Alpaca and any other secrets, you can either:
     base_url = alpaca_cfg["data_base_url"]
     ```
 
-### Strategy Parameters
+### Strategy Parameters (Basket Stat Arb)
 
-- `z_score_entry`: Entry threshold (default: 2.0)
-- `z_score_exit`: Exit threshold (default: 0.5)
-- `lookback_period`: Statistical calculation window (default: 252)
-- `formation_period`: Pairs formation period (default: 504)
+Key configuration lives in `statarb/run_analysis.py` and the following modules:
+
+- `statarb/models/factor_models.py`:
+  - Factor definitions per asset class (e.g. `EquityFactorModel`, `FXFactorModel`, `CryptoFactorModel`, `MetalFactorModel`).
+- `statarb/models/unsupervised_models.py`:
+  - `RegimeDetector`: GMM + HMM regime model (`n_gmm_components`, `n_regimes`).
+- `statarb/strategies/basket_stat_arb.py`:
+  - `BasketStatArbConfig`:
+    - `tradable_regimes`: which regimes are allowed to trade (e.g. `[0]` for mean-reverting).
+    - `gross_leverage`: target sum of absolute weights per basket.
+    - `transaction_cost_bps`: transaction cost in basis points.
 
 ### Data Sources
 
